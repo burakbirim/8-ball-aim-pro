@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>8 Ball Aim Pro</title>
+<style>
+body{margin:0;background:#101820;color:white;font-family:Arial;text-align:center;padding:18px}
+h1{color:#35d6c0}
+button{padding:12px;margin:6px;border:0;border-radius:8px;background:#35d6c0;color:#101820;font-weight:bold}
+canvas{width:100%;max-width:700px;border:2px solid #35d6c0;border-radius:10px;margin-top:15px}
+input{margin:15px}
+</style>
+</head>
+<body>
+<h1>8 BALL AIM PRO</h1>
+<p>Oyun ekranının fotoğrafını yükle.</p>
+<input type="file" id="file" accept="image/*">
+<br>
+<canvas id="canvas"></canvas>
+<p id="info">Önce beyaz topa, sonra hedef topa, son olarak cebe dokun.</p>
+<button onclick="undo()">Geri al</button>
+<button onclick="reset()">Sıfırla</button>
+<script>
+const c=document.getElementById("canvas");
+const ctx=c.getContext("2d");
+let img=new Image(),points=[];
+document.getElementById("file").onchange=e=>{
+const f=e.target.files[0];
+if(!f)return;
+img.onload=()=>{
+c.width=img.width;c.height=img.height;
+draw();
+};
+img.src=URL.createObjectURL(f);
+};
+c.onclick=e=>{
+if(!img.src)return;
+const r=c.getBoundingClientRect();
+points.push({
+x:(e.clientX-r.left)*c.width/r.width,
+y:(e.clientY-r.top)*c.height/r.height
+});
+if(points.length>3)points.shift();
+draw();
+};
+function draw(){
+ctx.clearRect(0,0,c.width,c.height);
+if(img.src)ctx.drawImage(img,0,0);
+points.forEach((p,i)=>{
+ctx.beginPath();ctx.arc(p.x,p.y,8,0,Math.PI*2);
+ctx.fillStyle=["white","#ff5555","#35d6c0"][i];
+ctx.fill();
+});
+if(points.length===3){
+const [w,t,p]=points;
+const dx=t.x-p.x,dy=t.y-p.y;
+const len=Math.hypot(dx,dy)||1;
+const radius=Math.min(c.width,c.height)*0.012;
+const ghost={x:t.x+dx/len*radius*2,y:t.y+dy/len*radius*2};
+ctx.beginPath();ctx.moveTo(w.x,w.y);ctx.lineTo(ghost.x,ghost.y);
+ctx.strokeStyle="#35d6c0";ctx.lineWidth=3;ctx.stroke();
+ctx.beginPath();ctx.moveTo(t.x,t.y);ctx.lineTo(p.x,p.y);
+ctx.strokeStyle="#ffd43b";ctx.stroke();
+document.getElementById("info").textContent="Atış çizgisi gösterildi.";
+}else{
+document.getElementById("info").textContent="Sıradaki noktayı seç.";
+}
+}
+function undo(){points.pop();draw();}
+function reset(){points=[];draw();}
+</script>
+</body>
+</html>
